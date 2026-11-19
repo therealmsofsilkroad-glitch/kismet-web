@@ -33,8 +33,11 @@ gcloud config set project "$P" >/dev/null 2>&1 || fail "Proje seçilemedi: $P"
 
 say "API'ler açılıyor (1-2 dk sürebilir)"
 gcloud services enable firebase.googleapis.com fcm.googleapis.com fcmregistrations.googleapis.com \
-  firebaseinstallations.googleapis.com androidpublisher.googleapis.com iam.googleapis.com \
-  cloudresourcemanager.googleapis.com --project "$P" || fail "API'ler açılamadı (faturalandırma/izin?)."
+  firebaseinstallations.googleapis.com iam.googleapis.com cloudresourcemanager.googleapis.com \
+  --project "$P" || fail "API'ler açılamadı (izin?)."
+# Play Developer API ayrı: kullanım koşulları kabul edilmemişse kurulum durmaz, sonda hatırlatılır.
+PLAY_API=ok
+gcloud services enable androidpublisher.googleapis.com --project "$P" >/dev/null 2>&1 || PLAY_API=no
 
 say "Firebase ekleniyor"
 if [ "$(api GET "$FB/projects/$P" | jget "d.get('projectId')")" != "$P" ]; then
@@ -104,3 +107,7 @@ PY
 
 printf '\n\033[1;32m✔ Tamam! Claude'"'"'a "betik bitti" yaz.\033[0m\n'
 printf '\nPlay Console'"'"'a davet edilecek hizmet hesabı:\n\n   \033[1m%s\033[0m\n\n' "$SA"
+if [ "$PLAY_API" = no ]; then
+  printf '\033[1;33m! Google Play Developer API açılamadı (koşullar kabul edilmemiş).\033[0m\n'
+  printf '  Şu sayfada koşulları kabul et, sonra Claude'"'"'a söyle:\n  https://console.developers.google.com/terms/androidpublisher\n\n'
+fi
