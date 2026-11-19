@@ -1,0 +1,16 @@
+Kismet hediye animasyonları
+
+Hediyelerin animasyonları Google Noto Emoji animasyonlarından alınmıştır:
+https://googlefonts.github.io/noto-emoji-animation/
+Telif hakkı Google LLC. Creative Commons Atıf 4.0 Uluslararası (CC BY 4.0) lisansıyla
+dağıtılır: https://creativecommons.org/licenses/by/4.0/
+
+Kismet'te değiştirilerek kullanılmıştır: ondalık değerler yuvarlandı; animasyonlar
+sahnelere yerleştirildi, zamanlaması, boyutu ve hareketi değiştirildi; arka plan ve
+parçacık efektleri eklendi. Google bu değişiklikleri onaylamış ya da desteklemiş değildir.
+
+Kullanılan animasyonlar (dosya: emoji kodu)
+gul: 1f339 · opucuk: 1f48b · kadeh: 1f942 · buket: 1f490 · alev_kalp: 2764-fe0f-200d-1f525
+kalp: 1f496 · yuzuk: 1f48d · konfeti: 1f38a · tac: 1f451 · elmas: 1f48e · tekboynuz: 1f984
+gezegen: 1fa90 · yat: 26f5 · jet: 2708-fe0f · roket: 1f680 · aslan: 1f981
+anka: 1f426-200d-1f525 · ejderha: 1f409 · parilti: 2728
