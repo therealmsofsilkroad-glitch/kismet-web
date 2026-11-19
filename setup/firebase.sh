@@ -15,7 +15,7 @@ SA_NAME="kismet-sunucu"
 SA="$SA_NAME@$P.iam.gserviceaccount.com"
 DROP_URL="https://zkngjtsmsrkciywvigtd.supabase.co/rest/v1/rpc/setup_drop"
 DROP_KEY="sb_publishable_TXYqa7qBfiVy7pj0M_Wq_Q_V4xNZjw_"
-NONCE="b5ccc6bf-b0cc-447b-8c2e-c52b2073b0f1"
+NONCE="6bd203b7-81d6-4409-a35b-791571b72886"
 FB="https://firebase.googleapis.com/v1beta1"
 
 say() { printf '\n\033[1;35m▶ %s\033[0m\n' "$*"; }
@@ -35,9 +35,7 @@ say "API'ler açılıyor (1-2 dk sürebilir)"
 gcloud services enable firebase.googleapis.com fcm.googleapis.com fcmregistrations.googleapis.com \
   firebaseinstallations.googleapis.com iam.googleapis.com cloudresourcemanager.googleapis.com \
   --project "$P" || fail "API'ler açılamadı (izin?)."
-# Play Developer API ayrı: kullanım koşulları kabul edilmemişse kurulum durmaz, sonda hatırlatılır.
-PLAY_API=ok
-gcloud services enable androidpublisher.googleapis.com --project "$P" >/dev/null 2>&1 || PLAY_API=no
+# Play Developer API sonda ayrıca açılır: koşullar kabul edilmemişse kurulum durmaz, bağlantı verilir.
 
 say "Firebase ekleniyor"
 if [ "$(api GET "$FB/projects/$P" | jget "d.get('projectId')")" != "$P" ]; then
@@ -75,7 +73,9 @@ gcloud iam service-accounts describe "$SA" --project "$P" >/dev/null 2>&1 || \
 gcloud projects add-iam-policy-binding "$P" --member="serviceAccount:$SA" \
   --role="roles/firebasecloudmessaging.admin" --condition=None >/dev/null || fail "FCM yetkisi verilemedi."
 mkdir -p ~/.kismet && chmod 700 ~/.kismet
+KEY_NEW=0
 if [ ! -s ~/.kismet/key.json ]; then
+  KEY_NEW=1
   gcloud iam service-accounts keys create ~/.kismet/key.json --iam-account="$SA" --project "$P" \
     || fail "Anahtar oluşturulamadı (kuruluş politikası anahtarı engelliyor olabilir)."
 fi
@@ -103,11 +103,29 @@ except Exception as e:
     print("hata:", e)
 PY
 )
-[ "$res" = "ok" ] || fail "İletilemedi: $res (anahtarın süresi dolduysa Claude'dan yenisini iste)."
+if [ "$res" != "ok" ]; then
+  if [ "$KEY_NEW" = 0 ] && [ "$res" = "expired" ]; then
+    echo "Anahtar daha önce iletilmişti."
+  else
+    fail "İletilemedi: $res (anahtarın süresi dolduysa Claude'dan yenisini iste)."
+  fi
+fi
+
+say "Google Play Developer API"
+if gcloud services enable androidpublisher.googleapis.com --project "$P" >/dev/null 2>&1; then
+  PLAY_API=ok
+  echo "Açık."
+else
+  PLAY_API=no
+fi
 
 printf '\n\033[1;32m✔ Tamam! Claude'"'"'a "betik bitti" yaz.\033[0m\n'
 printf '\nPlay Console'"'"'a davet edilecek hizmet hesabı:\n\n   \033[1m%s\033[0m\n\n' "$SA"
 if [ "$PLAY_API" = no ]; then
-  printf '\033[1;33m! Google Play Developer API açılamadı (koşullar kabul edilmemiş).\033[0m\n'
-  printf '  Şu sayfada koşulları kabul et, sonra Claude'"'"'a söyle:\n  https://console.developers.google.com/terms/androidpublisher\n\n'
+  ACC=$(gcloud config get-value account 2>/dev/null)
+  printf '\033[1;33m! Google Play Developer API için kullanım koşullarını bir kez kabul etmen gerekiyor.\033[0m\n'
+  printf '  1) Şu bağlantıya dokun (bu hesapla açılır):\n     https://console.developers.google.com/terms/androidpublisher?authuser=%s\n' "$ACC"
+  printf '  2) Kabul et, sonra bu komutu tekrar çalıştır:  curl -sL kismetim.app/k | bash\n\n'
+else
+  printf '\033[1;32m✔ Google Play Developer API açık.\033[0m\n\n'
 fi
